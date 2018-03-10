@@ -58,9 +58,10 @@ async def _main():
     logging.info('count offers %s ' % len(offers))
     for el in offers:
         await send_to_telegram_message(bot_token=cian_bot, chat_id=chat_id, message=el)
+    i = 0
     while True:
         async for proxy in get_proxy():
-            logging.debug(proxy)
+            i += 1
             res = await get_offers(proxy)
             if not res:
                 continue
@@ -74,6 +75,8 @@ async def _main():
                 await send_to_telegram_message(bot_token=cian_bot, chat_id=chat_id, message=url)
             else:
                 await asyncio.sleep(random.randint(30, 90))
+            if i % 100 == 0:
+                await alert()
 
 
 async def alert():
@@ -98,7 +101,6 @@ def main():
     logging.info('start')
     loop = asyncio.get_event_loop()
     loop.create_task(_main())
-    loop.create_task(alert())
     loop.run_forever()
 
 
