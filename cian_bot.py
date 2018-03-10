@@ -41,13 +41,13 @@ async def get_offers(proxy=None):
     url = 'https://www.cian.ru/cian-api/site/v1/search-offers/'
 
     try:
-        async with aiohttp.ClientSession(read_timeout=600, conn_timeout=600) as session:
+        async with aiohttp.ClientSession(read_timeout=120, conn_timeout=120) as session:
             async with session.post(url, json=body, proxy=proxy) as resp:
                 if resp.status == 200:
                     return await resp.json()
     except (ClientResponseError, aiohttp.client_exceptions.ClientOSError):
         logging.error('cian block')
-    except aiohttp.client_exceptions.ServerDisconnectedError:
+    except (aiohttp.client_exceptions.ServerDisconnectedError, aiohttp.client_exceptions.ServerTimeoutError, asyncio.TimeoutError):
         logging.error('proxy bad')
     else:
         await asyncio.sleep(random.randint(5, 20))
@@ -72,8 +72,14 @@ async def _main():
                 await send_to_telegram_message(bot_token=cian_bot, chat_id=chat_id, message='Новые горячие хатки: ')
             for url in new_offers_url:
                 await send_to_telegram_message(bot_token=cian_bot, chat_id=chat_id, message=url)
+            else:
+                await asyncio.sleep(random.randint(30, 90))
 
-            await asyncio.sleep(random.randint(30, 90))
+
+async def alert():
+    while True:
+        await send_to_telegram_message(bot_token=cian_bot, chat_id=chat_id, message='I am working, SIR !! i am seacing new house!!! ')
+        await asyncio.sleep(600)
 
 
 async def get_proxy():
@@ -92,6 +98,7 @@ def main():
     logging.info('start')
     loop = asyncio.get_event_loop()
     loop.create_task(_main())
+    loop.create_task(alert())
     loop.run_forever()
 
 
